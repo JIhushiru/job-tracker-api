@@ -15,7 +15,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-# Update Job
+# Update Job #
 @app.put("/jobs/{job_id}", response_model=Job)
 def update_job(job_id: int, updated: Job, session: Session = Depends(get_session)):
     job = session.get(Job, job_id)
@@ -31,7 +31,7 @@ def update_job(job_id: int, updated: Job, session: Session = Depends(get_session
     session.refresh(job)
     return job
 
-# Delete Job
+# Delete Job #
 @app.delete("/jobs/{job_id}")
 def delete_job(job_id: int, session: Session = Depends(get_session)):
     job = session.get(Job, job_id)
