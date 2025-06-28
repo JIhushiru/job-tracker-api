@@ -1,8 +1,8 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from sqlmodel import Session, select
-from typing import List
-from fastapi import HTTPException
+from typing import Optional,List
+from fastapi import HTTPException, Query
 from app.schemas import Job
 from app.database import get_session, init_db
 
@@ -14,6 +14,23 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
+
+# Get specific Job #
+@app.get("/jobs", response_model=List[Job])
+def get_jobs(
+    status: Optional[str] = Query(default=None),
+    company: Optional[str] = Query(default=None),
+    session: Session = Depends(get_session),
+):
+    query = select(Job)
+
+    if status:
+        query = query.where(Job.status == status)
+    if company:
+        query = query.where(Job.company == company)
+
+    return session.exec(query).all()
+
 
 # Update Job #
 @app.put("/jobs/{job_id}", response_model=Job)
@@ -44,7 +61,6 @@ def delete_job(job_id: int, session: Session = Depends(get_session)):
 @app.get("/jobs", response_model=List[Job])
 def get_jobs(session: Session = Depends(get_session)):
     return session.exec(select(Job)).all()
-
 
 @app.post("/jobs", response_model=Job)
 def add_job(job: Job, session: Session = Depends(get_session)):
