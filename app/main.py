@@ -5,6 +5,7 @@ from typing import Optional,List
 from fastapi import HTTPException, Query
 from app.schemas import Job
 from app.database import get_session, init_db
+from app.worker import send_application_email
 
 
 @asynccontextmanager
@@ -15,7 +16,12 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-# Get specific Job #
+'''
+GET /jobs -> all jobs
+GET /jobs?status={status} -> filter by status
+GET /jobs?company={company} -> filter by company
+GET /jobs?company={company}&status={status} -> filter by status and company
+'''
 @app.get("/jobs", response_model=List[Job])
 def get_jobs(
     status: Optional[str] = Query(default=None),
@@ -67,6 +73,7 @@ def add_job(job: Job, session: Session = Depends(get_session)):
     session.add(job)
     session.commit()
     session.refresh(job)
+    send_application_email.delay(job.company, job.position)
     return job
 
 @app.get("/")
