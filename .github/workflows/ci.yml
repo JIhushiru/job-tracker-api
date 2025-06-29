@@ -53,7 +53,10 @@ jobs:
         run: |
           pip install flake8
           flake8 app --ignore=E501
-
+      - name: Auto format with Black
+        run: |
+          pip install black
+          black app --check
       - name: Run basic startup test
         run: |
           echo "Dependencies installed successfully."

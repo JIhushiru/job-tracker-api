@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
 from sqlmodel import Session, select
-from typing import Optional,List
+from typing import Optional, List
 from fastapi import HTTPException, Query
 from app.schemas import Job
 from app.database import get_session, init_db
@@ -9,6 +9,7 @@ from app.worker import send_application_email
 from app.mongo_logger import log_job_to_mongo
 from fastapi.responses import JSONResponse
 import pandas as pd
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -18,12 +19,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-'''
+"""
 GET /jobs -> all jobs
 GET /jobs?status={status} -> filter by status
 GET /jobs?company={company} -> filter by company
 GET /jobs?company={company}&status={status} -> filter by status and company
-'''
+"""
+
+
 @app.get("/jobs", response_model=List[Job])
 def get_jobs(
     status: Optional[str] = Query(default=None),
@@ -46,7 +49,7 @@ def update_job(job_id: int, updated: Job, session: Session = Depends(get_session
     job = session.get(Job, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    
+
     job.company = updated.company
     job.position = updated.position
     job.status = updated.status
@@ -56,16 +59,18 @@ def update_job(job_id: int, updated: Job, session: Session = Depends(get_session
     session.refresh(job)
     return job
 
+
 # Delete Job #
 @app.delete("/jobs/{job_id}")
 def delete_job(job_id: int, session: Session = Depends(get_session)):
     job = session.get(Job, job_id)
     if not job:
         raise HTTPException(status_code=404, detail="Job not found")
-    
+
     session.delete(job)
     session.commit()
     return {"message": f"Job {job_id} deleted"}
+
 
 # Add Job #
 @app.post("/jobs", response_model=Job)
@@ -77,6 +82,7 @@ def add_job(job: Job, session: Session = Depends(get_session)):
     send_application_email.delay(job.company, job.position)
     return job
 
+
 # Generate Report #
 @app.get("/report")
 def generate_report(session: Session = Depends(get_session)):
@@ -84,6 +90,7 @@ def generate_report(session: Session = Depends(get_session)):
     df = pd.DataFrame([job.model_dump() for job in jobs])
     status_counts = df["status"].value_counts().to_dict()
     return JSONResponse(content=status_counts)
+
 
 @app.get("/")
 def root():

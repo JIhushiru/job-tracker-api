@@ -5,3 +5,4 @@ psycopg2-binary
 celery[redis]
 pymongo[srv]==4.7.0
 pandas==2.2.2
+flake8
