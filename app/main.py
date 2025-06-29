@@ -40,7 +40,7 @@ def get_jobs(
     status: Optional[str] = Query(default=None),
     company: Optional[str] = Query(default=None),
     session: Session = Depends(get_session),
-    user: str = Depends(get_current_user)
+    user: str = Depends(get_current_user),
 ):
     query = select(Job)
 
