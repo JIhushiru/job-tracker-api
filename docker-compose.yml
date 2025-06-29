@@ -36,6 +36,11 @@ services:
   redis:
     image: redis:7
     restart: always
+  mongo:
+    image: mongo:6
+    restart: always
+    ports:
+      - "27017:27017"
 
 volumes:
   pgdata:
