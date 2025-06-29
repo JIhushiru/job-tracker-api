@@ -18,6 +18,7 @@ from app.schemas import User
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import StreamingResponse
 from app.schemas import JobHistory
+from app.constants import VALID_STATUS_TRANSITIONS
 import io
 import pandas as pd
 
@@ -72,6 +73,14 @@ def update_job(job_id: int, updated: Job, session: Session = Depends(get_session
         raise HTTPException(status_code=404, detail="Job not found")
 
     if job.status != updated.status or job.notes != updated.notes:
+        allowed_transitions = VALID_STATUS_TRANSITIONS.get(job.status, [])
+        if updated.status not in allowed_transitions:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid status transition from '{job.status}' to '{updated.status}'",
+            )
+
+        # Save to history if valid
         history = JobHistory(
             job_id=job.id,
             previous_status=job.status,
