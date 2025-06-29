@@ -42,6 +42,10 @@ GET /jobs?company={company}&status={status} -> filter by status and company
 def get_jobs(
     status: Optional[str] = Query(default=None),
     company: Optional[str] = Query(default=None),
+    sort_by: Optional[str] = Query(
+        default=None, pattern="^(company|status|date_applied)$"
+    ),
+    order: Optional[str] = Query(default="asc", pattern="^(asc|desc)$"),
     session: Session = Depends(get_session),
     user: str = Depends(get_current_user),
 ):
@@ -51,6 +55,11 @@ def get_jobs(
         query = query.where(Job.status == status)
     if company:
         query = query.where(Job.company == company)
+    if sort_by:
+        sort_column = getattr(Job, sort_by)
+        if order == "desc":
+            sort_column = sort_column.desc()
+        query = query.order_by(sort_column)
 
     return session.exec(query).all()
 
@@ -191,6 +200,21 @@ def export_jobs(
         media_type="text/csv",
         headers={"Content-Disposition": "attachment; filename=jobs.csv"},
     )
+
+
+@app.get("/jobs/search", response_model=List[Job])
+def search_jobs(
+    query: str,
+    session: Session = Depends(get_session),
+    user: User = Depends(get_current_user),
+):
+    stmt = select(Job).where(
+        Job.user_id == user.id,
+        (Job.company.ilike(f"%{query}%"))
+        | (Job.position.ilike(f"%{query}%"))
+        | (Job.notes.ilike(f"%{query}%")),
+    )
+    return session.exec(stmt).all()
 
 
 @app.get("/")

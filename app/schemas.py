@@ -10,6 +10,7 @@ class Job(SQLModel, table=True):
     status: str
     notes: Optional[str] = None
     user_id: Optional[int] = Field(default=None, foreign_key="user.id")
+    date_applied: Optional[datetime] = Field(default=None, nullable=True)
 
 
 class User(SQLModel, table=True):
