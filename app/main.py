@@ -66,9 +66,6 @@ def delete_job(job_id: int, session: Session = Depends(get_session)):
     session.delete(job)
     session.commit()
     return {"message": f"Job {job_id} deleted"}
-@app.get("/jobs", response_model=List[Job])
-def get_jobs(session: Session = Depends(get_session)):
-    return session.exec(select(Job)).all()
 
 # Add Job #
 @app.post("/jobs", response_model=Job)
