@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI, Depends, APIRouter
 from sqlmodel import Session, select
 from typing import Optional, List
 from fastapi import HTTPException, Query
@@ -16,6 +16,7 @@ from app.auth import (
 )
 from app.schemas import User
 from fastapi.security import OAuth2PasswordRequestForm
+
 import pandas as pd
 
 
@@ -127,6 +128,11 @@ def login(
 
     token = create_access_token(data={"sub": user.username})
     return {"access_token": token, "token_type": "bearer"}
+
+
+@app.get("/profile")
+def read_profile(current_user: str = Depends(get_current_user)):
+    return {"message": f"Hello, {current_user}"}
 
 
 @app.get("/")
