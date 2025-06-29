@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from fastapi import FastAPI, Depends, APIRouter
+from fastapi import FastAPI, Depends
 from sqlmodel import Session, select
 from typing import Optional, List
 from fastapi import HTTPException, Query
@@ -43,7 +43,7 @@ def get_jobs(
     session: Session = Depends(get_session),
     user: str = Depends(get_current_user),
 ):
-    query = select(Job)
+    query = select(Job).where(Job.user_id == user.id)
 
     if status:
         query = query.where(Job.status == status)
@@ -57,7 +57,7 @@ def get_jobs(
 @app.put("/jobs/{job_id}", response_model=Job)
 def update_job(job_id: int, updated: Job, session: Session = Depends(get_session)):
     job = session.get(Job, job_id)
-    if not job:
+    if not job or job.user_id != updated.user_id:
         raise HTTPException(status_code=404, detail="Job not found")
 
     job.company = updated.company
@@ -84,7 +84,12 @@ def delete_job(job_id: int, session: Session = Depends(get_session)):
 
 # Add Job #
 @app.post("/jobs", response_model=Job)
-def add_job(job: Job, session: Session = Depends(get_session)):
+def add_job(
+    job: Job,
+    session: Session = Depends(get_session),
+    user: str = Depends(get_current_user),
+):
+    job.user_id = user.id
     session.add(job)
     session.commit()
     session.refresh(job)
