@@ -16,7 +16,8 @@ from app.auth import (
 )
 from app.schemas import User
 from fastapi.security import OAuth2PasswordRequestForm
-
+from fastapi.responses import StreamingResponse
+import io
 import pandas as pd
 
 
@@ -151,6 +152,25 @@ def login(
 @app.get("/profile")
 def read_profile(current_user: str = Depends(get_current_user)):
     return {"message": f"Hello, {current_user}"}
+
+
+@app.get("/export")
+def export_jobs(
+    session: Session = Depends(get_session), user: User = Depends(get_current_user)
+):
+    jobs = session.exec(select(Job).where(Job.user_id == user.id)).all()
+    if not jobs:
+        raise HTTPException(status_code=404, detail="No jobs found")
+
+    df = pd.DataFrame([job.model_dump() for job in jobs])
+    stream = io.StringIO()
+    df.to_csv(stream, index=False)
+    stream.seek(0)
+    return StreamingResponse(
+        stream,
+        media_type="text/csv",
+        headers={"Content-Disposition": "attachment; filename=jobs.csv"},
+    )
 
 
 @app.get("/")
