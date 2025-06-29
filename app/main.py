@@ -220,12 +220,11 @@ def search_jobs(
     stmt = select(Job).where(
         Job.user_id == user.id,
         (
-            Job.company.ilike(f"%{query}%") |
-            Job.position.ilike(f"%{query}%") |
-            Job.notes.ilike(f"%{query}%")
+            Job.company.ilike(f"%{query}%")
+            | Job.position.ilike(f"%{query}%")
+            | Job.notes.ilike(f"%{query}%")
         ),
     )
-
 
     return session.exec(stmt).all()
 
