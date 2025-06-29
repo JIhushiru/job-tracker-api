@@ -8,6 +8,14 @@ from app.database import get_session, init_db
 from app.worker import send_application_email
 from app.mongo_logger import log_job_to_mongo
 from fastapi.responses import JSONResponse
+from app.auth import (
+    get_password_hash,
+    verify_password,
+    create_access_token,
+    get_current_user,
+)
+from app.schemas import User
+from fastapi.security import OAuth2PasswordRequestForm
 import pandas as pd
 
 
@@ -32,6 +40,7 @@ def get_jobs(
     status: Optional[str] = Query(default=None),
     company: Optional[str] = Query(default=None),
     session: Session = Depends(get_session),
+    user: str = Depends(get_current_user)
 ):
     query = select(Job)
 
@@ -90,6 +99,34 @@ def generate_report(session: Session = Depends(get_session)):
     df = pd.DataFrame([job.model_dump() for job in jobs])
     status_counts = df["status"].value_counts().to_dict()
     return JSONResponse(content=status_counts)
+
+
+@app.post("/auth/signup")
+def signup(
+    user: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)
+):
+    existing = session.exec(select(User).where(User.username == user.username)).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already exists")
+
+    hashed_pw = get_password_hash(user.password)
+    new_user = User(username=user.username, hashed_password=hashed_pw)
+    session.add(new_user)
+    session.commit()
+    return {"message": "User created"}
+
+
+@app.post("/auth/login")
+def login(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    session: Session = Depends(get_session),
+):
+    user = session.exec(select(User).where(User.username == form_data.username)).first()
+    if not user or not verify_password(form_data.password, user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+
+    token = create_access_token(data={"sub": user.username})
+    return {"access_token": token, "token_type": "bearer"}
 
 
 @app.get("/")

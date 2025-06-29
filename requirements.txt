@@ -6,3 +6,6 @@ celery[redis]
 pymongo[srv]==4.7.0
 pandas==2.2.2
 flake8
+passlib[bcrypt]
+python-jose[cryptography]
+python-multipart
