@@ -17,6 +17,7 @@ from app.auth import (
 from app.schemas import User
 from fastapi.security import OAuth2PasswordRequestForm
 from fastapi.responses import StreamingResponse
+from app.schemas import JobHistory
 import io
 import pandas as pd
 
@@ -61,6 +62,19 @@ def update_job(job_id: int, updated: Job, session: Session = Depends(get_session
     if not job or job.user_id != updated.user_id:
         raise HTTPException(status_code=404, detail="Job not found")
 
+    if job.status != updated.status or job.notes != updated.notes:
+        history = JobHistory(
+            job_id=job.id,
+            previous_status=job.status,
+            new_status=updated.status,
+        )
+        session.add(history)
+    if updated.status not in ["applied", "interviewing", "offer", "rejected"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid status. Must be one of: applied, interviewing, offer, rejected",
+        )
+
     job.company = updated.company
     job.position = updated.position
     job.status = updated.status
@@ -69,6 +83,12 @@ def update_job(job_id: int, updated: Job, session: Session = Depends(get_session
     session.commit()
     session.refresh(job)
     return job
+
+
+@app.get("/jobs/{job_id}/history", response_model=List[JobHistory])
+def get_job_history(job_id: int, session: Session = Depends(get_session)):
+    history = session.exec(select(JobHistory).where(JobHistory.job_id == job_id)).all()
+    return history
 
 
 # Delete Job #
