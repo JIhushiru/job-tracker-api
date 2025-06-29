@@ -7,7 +7,8 @@ from app.schemas import Job
 from app.database import get_session, init_db
 from app.worker import send_application_email
 from app.mongo_logger import log_job_to_mongo
-
+from fastapi.responses import JSONResponse
+import pandas as pd
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -69,14 +70,23 @@ def delete_job(job_id: int, session: Session = Depends(get_session)):
 def get_jobs(session: Session = Depends(get_session)):
     return session.exec(select(Job)).all()
 
+# Add Job #
 @app.post("/jobs", response_model=Job)
 def add_job(job: Job, session: Session = Depends(get_session)):
     session.add(job)
     session.commit()
     session.refresh(job)
-    log_job_to_mongo(job.dict())
+    log_job_to_mongo(job.model_dump())
     send_application_email.delay(job.company, job.position)
     return job
+
+# Generate Report #
+@app.get("/report")
+def generate_report(session: Session = Depends(get_session)):
+    jobs = session.exec(select(Job)).all()
+    df = pd.DataFrame([job.model_dump() for job in jobs])
+    status_counts = df["status"].value_counts().to_dict()
+    return JSONResponse(content=status_counts)
 
 @app.get("/")
 def root():
