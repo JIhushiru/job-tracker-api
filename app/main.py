@@ -6,6 +6,7 @@ from fastapi import HTTPException, Query
 from app.schemas import Job
 from app.database import get_session, init_db
 from app.worker import send_application_email
+from app.mongo_logger import log_job_to_mongo
 
 
 @asynccontextmanager
@@ -73,6 +74,7 @@ def add_job(job: Job, session: Session = Depends(get_session)):
     session.add(job)
     session.commit()
     session.refresh(job)
+    log_job_to_mongo(job.dict())
     send_application_email.delay(job.company, job.position)
     return job
 
