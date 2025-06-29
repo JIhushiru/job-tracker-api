@@ -8,6 +8,7 @@ class Job(SQLModel, table=True):
     position: str
     status: str
     notes: Optional[str] = None
+    user_id: Optional[int] = Field(default=None, foreign_key="user.id")
 
 
 class User(SQLModel, table=True):

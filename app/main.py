@@ -90,6 +90,19 @@ def add_job(
     user: str = Depends(get_current_user),
 ):
     job.user_id = user.id
+    existing_job = session.exec(
+        select(Job).where(
+            Job.company == job.company,
+            Job.position == job.position,
+        )
+    ).first()
+    if existing_job:
+        raise HTTPException(status_code=400, detail="Job already exists")
+    if job.status not in ["applied", "interviewing", "offer", "rejected"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid status. Must be one of: applied, interviewing, offer, rejected",
+        )
     session.add(job)
     session.commit()
     session.refresh(job)

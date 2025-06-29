@@ -4,9 +4,15 @@ from jose import JWTError, jwt
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from typing import Optional
+from sqlmodel import Session, select
+from app.database import get_session
+
+import os
+
+from app.schemas import User
 
 # Secret key to encode the JWT
-SECRET_KEY = "supersecretkey123"
+SECRET_KEY = os.getenv("SECRET_KEY", "fallback-key-for-dev-only")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
@@ -40,7 +46,10 @@ def decode_access_token(token: str):
         return None
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)):
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    session: Session = Depends(get_session),
+):
     username = decode_access_token(token)
     if username is None:
         raise HTTPException(
@@ -48,4 +57,9 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return username
+
+    user = session.exec(select(User).where(User.username == username)).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    return user
