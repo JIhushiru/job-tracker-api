@@ -21,6 +21,8 @@ class User(SQLModel, table=True):
 class JobHistory(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     job_id: int = Field(foreign_key="job.id")
-    previous_status: str
-    new_status: str
+    previous_status: Optional[str] = None
+    new_status: Optional[str] = None
+    previous_notes: Optional[str] = None
+    new_notes: Optional[str] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
