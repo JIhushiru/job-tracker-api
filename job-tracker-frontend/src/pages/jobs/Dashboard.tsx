@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getJobs } from "../../services/jobService";
 import type { Job } from "../../types"
+import JobTable from "./JobTable";
 
 export default function Dashboard() {
     const [jobs, setJobs] = useState<Job[]>([]);
@@ -22,18 +23,11 @@ export default function Dashboard() {
         <div>
         <h2>My Job Applications</h2>
         {error && <p>{error}</p>}
-        {jobs.length === 0 ? (
-            <p>No jobs yet.</p>
-        ) : (
-            <ul>
-            {jobs.map((job) => (
-                <li key={job.id}>
-                <strong>{job.position}</strong> @ {job.company} -{" "}
-                {job.status.toUpperCase()}
-                </li>
-            ))}
-            </ul>
-        )}
+            {jobs.length === 0 ? (
+            <p>No jobs found.</p>
+            ) : (
+            <JobTable jobs={jobs} />
+            )}
         </div>
     );
 }

@@ -3,6 +3,7 @@ from fastapi import FastAPI, Depends
 from sqlmodel import Session, select
 from typing import Optional, List
 from fastapi import HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from app.schemas import Job
 from app.database import get_session, init_db
 from app.worker import send_application_email
@@ -33,7 +34,13 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(lifespan=lifespan)
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 """
 GET /jobs -> all jobs
 GET /jobs?status={status} -> filter by status
