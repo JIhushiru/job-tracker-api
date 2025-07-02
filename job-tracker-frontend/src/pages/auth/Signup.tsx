@@ -41,6 +41,8 @@ export default function Signup() {
                 />
                 <br />
                 <button type="submit">Submit</button>
+                <span style={{ margin: "0 8px" }}></span>
+                <button type="button" onClick={() => navigate("/")}>Back</button>
             </form>
             {success && <p>{success}</p>}
             {error && <p>{error}</p>}

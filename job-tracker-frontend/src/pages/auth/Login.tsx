@@ -29,6 +29,7 @@ export default function Login() {
                     onChange={(e) => setUsername(e.target.value)}
                     required
                 />
+                <br />
                 <input
                     type="password"
                     placeholder="Passsword"
@@ -38,6 +39,8 @@ export default function Login() {
                 />
                 <br />
                 <button type="submit">Login</button>
+                <span style={{ margin: "0 8px" }}></span>
+                <button type="button" onClick={() => navigate("/")}>Back</button>
             </form>
             {error && <p className="error">{error}</p>}
         </div>
