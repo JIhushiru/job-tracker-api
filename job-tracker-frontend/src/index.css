@@ -35,7 +35,10 @@ h1 {
   line-height: 1.1;
 }
 
-button {
+.Loginbtn,
+.SignUpbtn,
+.AddJobbtn,
+.Logoutbtn {
   border-radius: 8px;
   border: 1px solid transparent;
   padding: 0.6em 1.2em;
@@ -46,11 +49,20 @@ button {
   cursor: pointer;
   transition: border-color 0.25s;
 }
-button:hover {
+.Loginbtn:hover,
+.SignUpbtn:hover,
+.AddJobbtn:hover,
+.Logoutbtn:hover {
   border-color: #646cff;
 }
-button:focus,
-button:focus-visible {
+.Loginbtn:focus,
+.SignUpbtn:focus,
+.AddJobbtn:focus,
+.Logoutbtn:focus,
+.Loginbtn:focus-visible,
+.SignUpbtn:focus-visible,
+.AddJobbtn:focus-visible,
+.Logoutbtn:focus-visible {
   outline: 4px auto -webkit-focus-ring-color;
 }
 
@@ -74,4 +86,31 @@ td {
 
 .jobTable {
   margin-bottom: 2em;
+}
+
+.deleteButton {
+  width: 1rem;
+  height: 1rem;
+  cursor: pointer;
+  filter: invert(1);
+  background-color: none;
+  border: none;
+  padding: 0;
+  transition: filter 0.3s;
+}
+
+.deleteContainer{
+  background-color: transparent;
+  border: none;
+}
+.deleteButton:hover {
+  filter: invert(0);
+}
+td.deleteColumn {
+  border: none;
+}
+
+.accountForm{
+  position: relative;
+  display: inline-block
 }

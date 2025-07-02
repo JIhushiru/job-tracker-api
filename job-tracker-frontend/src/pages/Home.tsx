@@ -1,5 +1,6 @@
+import LoginSignup from "./auth/LoginSignup";
 import "./Home.css";
-import Login from "./auth/Login";
+
 
 export default function Home() {
     return (
@@ -7,7 +8,7 @@ export default function Home() {
         <div className="home-container">
             <h1 className="home-title">Welcome to Job Tracker</h1>
             <p className="home-description">Track your job applications with ease</p>
-            <Login/>
+            <LoginSignup />
         </div>
         
         <div className="social-accounts">

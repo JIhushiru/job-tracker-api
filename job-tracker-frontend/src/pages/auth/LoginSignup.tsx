@@ -3,7 +3,7 @@ import { login, signup } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
 import "./login.css";
  
-export default function Login() {
+export default function LoginSignup() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
     const [error, setError] = useState("");
@@ -57,7 +57,7 @@ export default function Login() {
                     required
                 />
                 <br />
-                <div style={{ position: "relative", display: "inline-block" }}>
+                <div className="accountForm">
                     <input
                         className="accountInput"
                         type={showPassword ? "text" : "password"}
@@ -81,9 +81,9 @@ export default function Login() {
                     </button>
                 </div>
                 <br />
-                <button type="submit" onClick={handleLogin}>Login</button>
+                <button type="submit" onClick={handleLogin} className="Loginbtn">Login</button>
                 <span style={{ margin: "0 8px" }}></span>
-                <button type="button" onClick={handleSignup}>Signup</button>
+                <button type="button" onClick={handleSignup} className="SignUpbtn">SignUp</button>
             </form>
             {error && <p className="error">{error}</p>}
         </div>

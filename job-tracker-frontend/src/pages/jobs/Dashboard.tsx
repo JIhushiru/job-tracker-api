@@ -21,6 +21,10 @@ export default function Dashboard() {
         fetchJobs();
     }, []);
 
+    const handleDelete = (jobId: number) => {
+        setJobs((prev) => prev.filter((job) => job.id !== jobId));
+    };
+
     return (
         <div>
             <h1>MY JOB APPLICATIONS</h1>
@@ -33,10 +37,10 @@ export default function Dashboard() {
                     {jobs.length === 0 ? (
                         <p>No jobs found.</p>
                     ) : (
-                        <JobTable jobs={jobs} />
+                        <JobTable jobs={jobs} onDelete={handleDelete}/>
                     )}
                     <Link to="/add-job">
-                        <button>Add Job</button>
+                        <button className="AddJobbtn">Add Job</button>
                     </Link>
                     <span>  </span>
                     <LogoutButton />

@@ -22,3 +22,13 @@ export const createJob = async (
   });
   return response.data;
 };
+
+export const deleteJob = async (jobId: number): Promise<void> => {
+  const token = localStorage.getItem("token");
+  await axios.delete(`/jobs/${jobId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+};
+
