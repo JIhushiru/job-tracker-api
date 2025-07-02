@@ -21,6 +21,9 @@ from app.schemas import JobHistory
 from app.constants import VALID_STATUS_TRANSITIONS
 import io
 import pandas as pd
+from fastapi.security import OAuth2PasswordBearer
+from jose import jwt, JWTError
+from app.auth import blacklist_token, SECRET_KEY, ALGORITHM
 
 
 @asynccontextmanager
@@ -48,7 +51,7 @@ def get_jobs(
     ),
     order: Optional[str] = Query(default="asc", pattern="^(asc|desc)$"),
     session: Session = Depends(get_session),
-    user: str = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ):
     query = select(Job).where(Job.user_id == user.id)
 
@@ -126,7 +129,7 @@ def delete_job(job_id: int, session: Session = Depends(get_session)):
 def add_job(
     job: Job,
     session: Session = Depends(get_session),
-    user: str = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ):
     job.user_id = user.id
     existing_job = session.exec(
@@ -188,7 +191,7 @@ def login(
 
 
 @app.get("/profile")
-def read_profile(current_user: str = Depends(get_current_user)):
+def read_profile(current_user: User = Depends(get_current_user)):
     return {"message": f"Hello, {current_user}"}
 
 
@@ -227,6 +230,22 @@ def search_jobs(
     )
 
     return session.exec(stmt).all()
+
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+
+@app.post("/auth/logout")
+def logout(token: str = Depends(oauth2_scheme)):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        exp = payload.get("exp")
+        if exp:
+            blacklist_token(token, exp)
+    except JWTError:
+        pass  # Ignore invalid or expired token
+
+    return {"message": "Logged out and token blacklisted."}
 
 
 @app.get("/")

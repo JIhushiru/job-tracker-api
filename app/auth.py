@@ -6,15 +6,30 @@ from passlib.context import CryptContext
 from typing import Optional
 from sqlmodel import Session, select
 from app.database import get_session
-
-import os
-
 from app.schemas import User
+import os
+import redis
+
+
+redis_client = redis.Redis(
+    host=os.getenv("REDIS_HOST", "localhost"), port=6379, db=1, decode_responses=True
+)
 
 # Secret key to encode the JWT
 SECRET_KEY = os.getenv("SECRET_KEY", "fallback-key-for-dev-only")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+
+def blacklist_token(token: str, exp: int):
+    """Store token in Redis until it expires."""
+    ttl = exp - int(datetime.utcnow().timestamp())
+    redis_client.setex(f"blacklist:{token}", ttl, "true")
+
+
+def is_token_blacklisted(token: str) -> bool:
+    return redis_client.exists(f"blacklist:{token}") == 1
+
 
 # Password hashing
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -50,16 +65,18 @@ def get_current_user(
     token: str = Depends(oauth2_scheme),
     session: Session = Depends(get_session),
 ):
-    username = decode_access_token(token)
-    if username is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid authentication credentials",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+    if is_token_blacklisted(token):
+        raise HTTPException(status_code=401, detail="Token has been revoked")
+
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        username = payload.get("sub")
+        if username is None:
+            raise HTTPException(status_code=401, detail="Invalid token")
+    except JWTError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
     user = session.exec(select(User).where(User.username == username)).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
-
+    if user is None:
+        raise HTTPException(status_code=401, detail="User not found")
     return user
