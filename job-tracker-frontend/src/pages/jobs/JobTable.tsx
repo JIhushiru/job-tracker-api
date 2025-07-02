@@ -7,8 +7,7 @@ type JobTableProps = {
 
 const JobTable: React.FC<JobTableProps> = ({ jobs }) => {
   return (
-    <div>
-      <h2>Job Listings</h2>
+    <div className ="jobTable">
       <table>
         <thead>
           <tr>

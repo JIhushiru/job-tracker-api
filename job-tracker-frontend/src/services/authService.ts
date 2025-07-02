@@ -26,3 +26,15 @@ export const signup = async (username: string, password: string) => {
         },
     });
 };
+
+export const logout = async () => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    await axios.post("/auth/logout", null, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    localStorage.removeItem("token");
+  }
+};

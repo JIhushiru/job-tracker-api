@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { getJobs } from "../../services/jobService";
 import type { Job } from "../../types"
 import JobTable from "./JobTable";
+import { Link } from "react-router-dom";
+import LogoutButton from "../../button/LogoutButton";
 
 export default function Dashboard() {
     const [jobs, setJobs] = useState<Job[]>([]);
@@ -21,13 +23,18 @@ export default function Dashboard() {
 
     return (
         <div>
-        <h2>My Job Applications</h2>
-        {error && <p>{error}</p>}
+            <h1>MY JOB APPLICATIONS</h1>
+            {error && <p>{error}</p>}
             {jobs.length === 0 ? (
-            <p>No jobs found.</p>
+                <p>No jobs found.</p>
             ) : (
-            <JobTable jobs={jobs} />
+                <JobTable jobs={jobs} />
             )}
+            <Link to="/add-job">
+                <button>Add Job</button>
+            </Link>
+            <span>  </span>
+            <LogoutButton />
         </div>
     );
 }
