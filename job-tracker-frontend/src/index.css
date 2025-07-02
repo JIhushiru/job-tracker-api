@@ -183,3 +183,6 @@ td.deleteColumn {
   cursor: pointer;
 }
 
+.header {
+  cursor: pointer;
+}
