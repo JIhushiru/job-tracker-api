@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { login, signup } from "../../services/authService";
 import { useNavigate } from "react-router-dom";
 import "./login.css";
@@ -10,8 +10,19 @@ export default function Login() {
     const [showPassword, setShowPassword] = useState(false);
     const navigate = useNavigate();
 
+    useEffect (() => {
+        if (error) {
+            const timer = setTimeout(()=> setError(""), 3000)
+            return () => clearTimeout(timer);
+        }
+    },[error])
+    
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!username || !password) {
+            setError("Username and password are required");
+            return;
+        }
         try {
             await login(username, password);
             navigate("/jobs");
@@ -22,6 +33,10 @@ export default function Login() {
 
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (!username || !password) {
+            setError("Username and password are required");
+            return;
+        }
         try {
             await signup(username, password);
             setError(""); // Clear error on success

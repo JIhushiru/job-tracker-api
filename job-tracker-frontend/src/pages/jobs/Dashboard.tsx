@@ -24,17 +24,24 @@ export default function Dashboard() {
     return (
         <div>
             <h1>MY JOB APPLICATIONS</h1>
-            {error && <p>{error}</p>}
-            {jobs.length === 0 ? (
-                <p>No jobs found.</p>
+            {error ? (
+                <Link to="/">
+                    <button>Sign In</button>
+                </Link>
             ) : (
-                <JobTable jobs={jobs} />
+                <>
+                    {jobs.length === 0 ? (
+                        <p>No jobs found.</p>
+                    ) : (
+                        <JobTable jobs={jobs} />
+                    )}
+                    <Link to="/add-job">
+                        <button>Add Job</button>
+                    </Link>
+                    <span>  </span>
+                    <LogoutButton />
+                </>
             )}
-            <Link to="/add-job">
-                <button>Add Job</button>
-            </Link>
-            <span>  </span>
-            <LogoutButton />
         </div>
     );
 }
