@@ -10,3 +10,15 @@ export const getJobs = async (): Promise<Job[]> => {
   });
   return response.data;
 };
+
+export const createJob = async (
+  job: Omit<Job, "id" | "date_applied">
+): Promise<Job> => {
+  const token = localStorage.getItem("token");
+  const response = await axios.post("/jobs", job, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};
