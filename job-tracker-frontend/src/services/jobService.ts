@@ -12,7 +12,7 @@ export const getJobs = async (): Promise<Job[]> => {
 };
 
 export const createJob = async (
-  job: Omit<Job, "id" | "date_applied">
+  job: Omit<Job, "id">
 ): Promise<Job> => {
   const token = localStorage.getItem("token");
   const response = await axios.post("/jobs", job, {
