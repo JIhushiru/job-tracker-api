@@ -32,3 +32,12 @@ export const deleteJob = async (jobId: number): Promise<void> => {
   });
 };
 
+export const updateJob = async (id: number, updatedJob: Job): Promise<Job> => {
+  const token = localStorage.getItem("token");
+  const response = await axios.put(`/jobs/${id}`, updatedJob, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+  return response.data;
+};

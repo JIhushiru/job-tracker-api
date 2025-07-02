@@ -2,17 +2,21 @@ import React from "react";
 import type { Job } from "../../types";
 import { deleteJob } from "../../services/jobService";
 import { useState } from "react";
+import "./JobTable.css";
+import { useNavigate } from "react-router-dom";
+
 type JobTableProps = {
   jobs: Job[];
   onDelete: (jobId: number) => void; // To update parent state
+  onEdit: (job: Job) => void;
 };
 
-const JobTable: React.FC<JobTableProps> = ({ jobs, onDelete }) => {
+const JobTable: React.FC<JobTableProps> = ({ jobs, onDelete, onEdit }) => {
   const [sortBy, setSortBy] = useState<keyof Job | "notesLength">("date_applied")
   const [sortOrder, setSortOrder] = useState<"asc" |"desc">("asc");
   const [currentPage, setCurrentPage] = useState(1);
   const jobsPerPage = 10; 
-
+  const navigate = useNavigate();
 
   const handleDelete = async (jobId: number) => {
     const confirmed = window.confirm("Are you sure you want to delete this job?");
@@ -31,6 +35,8 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, onDelete }) => {
       }
     } catch (error) {
       alert("Failed to delete job");
+      alert("Token expired or invalid. Please log in again.");
+      navigate("/");
     }
   };
 
@@ -76,7 +82,7 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, onDelete }) => {
 
   return (
     <>
-    <div className ="jobTable">
+    <div className ="job-table">
       <table>
         <thead>
           <tr>
@@ -88,35 +94,44 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, onDelete }) => {
             <th className = "header" onClick={() => handleSort("date_applied")}>Date Applied{sortIndicator("date_applied")}</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="job-table-body">
           {currentJobs.map((job) => (
             <tr key={job.id}>
-              <td className = "deleteColumn">
+              <td className = "button-column">
                   <button onClick={() => handleDelete(job.id)} className="deleteContainer">
                     <img src="/icons/delete.svg" alt="Delete" className="deleteButton"/>
+                  </button>
+                  <button onClick={() => onEdit(job)} className="updateContainer">
+                    <img src="/icons/edit.svg" alt="Edit" className="updateButton" />
                   </button>
               </td>
               <td>{job.company}</td>
               <td>{job.position}</td>
-              <td>{job.status}</td>
-              <td>{job.notes}</td>
+              <td>
+                <span className={`status-badge status-${job.status.toLowerCase()}`}>
+                  {job.status}
+                </span>
+              </td>
+              <td>{job.notes || "-"}</td>
               <td>{job.date_applied?.split("T")[0] || "-"}</td>
             </tr>
           ))}
         </tbody>
       </table>
     </div>
-  <div className="pagination-controls">
-    {Array.from({ length: Math.ceil(sortedJobs.length / jobsPerPage) }, (_, i) => i + 1).map((num) => (
-      <button
-        key={num}
-        onClick={() => setCurrentPage(num)}
-        className={num === currentPage ? "active-page" : ""}
-      >
-        {num}
-      </button>
-    ))}
-  </div>
+  {Math.ceil(sortedJobs.length / jobsPerPage) > 1 && (
+    <div className="pagination-controls">
+      {Array.from({ length: Math.ceil(sortedJobs.length / jobsPerPage) }, (_, i) => i + 1).map((num) => (
+        <button
+          key={num}
+          onClick={() => setCurrentPage(num)}
+          className={num === currentPage ? "active-page" : ""}
+        >
+          {num}
+        </button>
+      ))}
+    </div>
+  )}
   </>
   );
 };

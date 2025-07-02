@@ -5,12 +5,13 @@ import JobTable from "./JobTable";
 import LogoutButton from "../../button/LogoutButton";
 import AddJobForm from "./AddJobForm"; 
 import SocialAccount from "../social/SocialAccount";
+import EditJobForm from "./EditJobForm";
 
 export default function Dashboard() {
     const [jobs, setJobs] = useState<Job[]>([]);
     const [error, setError] = useState("");
-    const [showAddModal, setShowAddModal] = useState(false); 
-
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [jobBeingEdited, setJobBeingEdited] = useState<Job | null>(null);
     useEffect(() => {
         const fetchJobs = async () => {
             try {
@@ -32,10 +33,16 @@ export default function Dashboard() {
         setShowAddModal(false);
     };
 
+    const handleJobUpdated = (updatedJob: Job) => {
+        setJobs((prev) =>
+            prev.map((job) => (job.id === updatedJob.id ? updatedJob : job))
+        );
+    };
+
     return (
         <>
         <div>
-            <h1>MY JOB APPLICATIONS</h1>
+            <div className="job-application">MY JOB APPLICATIONS</div>
             {error ? (
                 <button onClick={() => window.location.href = "/"}>Sign In</button>
             ) : (
@@ -43,14 +50,19 @@ export default function Dashboard() {
                     {jobs.length === 0 ? (
                         <p>No jobs found.</p>
                     ) : (
-                        <JobTable jobs={jobs} onDelete={handleDelete} />
+                        <JobTable
+                        jobs={jobs}
+                        onDelete={handleDelete}
+                        onEdit={setJobBeingEdited}
+                        />
                     )}
-
+                    <div className="bottom-buttons">
                     <button className="AddJobbtn" onClick={() => setShowAddModal(true)}>
                         Add Job
                     </button>
                     <span style={{margin: "0 8px"}}></span>
                     <LogoutButton />
+                    </div>
 
                     {showAddModal && (
                         <div className="modal-overlay"
@@ -64,6 +76,23 @@ export default function Dashboard() {
                                 <AddJobForm onJobAdded={handleJobAdded} />
                             </div>
                         </div>
+                    )}
+                    {jobBeingEdited && (
+                    <div className="modal-overlay" onClick={(e) => {
+                        if (e.target === e.currentTarget) setJobBeingEdited(null);
+                    }}>
+                        <div className="modal">
+                        <button className="close-btn" onClick={() => setJobBeingEdited(null)}>X</button>
+                        <EditJobForm
+                            job={jobBeingEdited}
+                            onUpdated={(updatedJob) => {
+                            handleJobUpdated(updatedJob);
+                            setJobBeingEdited(null);
+                            }}
+                            onClose={() => setJobBeingEdited(null)}
+                        />
+                        </div>
+                    </div>
                     )}
                 </>
             )}

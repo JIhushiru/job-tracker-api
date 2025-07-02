@@ -77,10 +77,15 @@ def get_jobs(
 
 # Update Job #
 @app.put("/jobs/{job_id}", response_model=Job)
-def update_job(job_id: int, updated: Job, session: Session = Depends(get_session)):
+def update_job(
+    job_id: int,
+    updated: Job,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user)
+):
     job = session.get(Job, job_id)
-    if not job or job.user_id != updated.user_id:
-        raise HTTPException(status_code=404, detail="Job not found")
+    if not job or job.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Job not found or unauthorized")
 
     if job.status != updated.status or job.notes != updated.notes:
         allowed_transitions = VALID_STATUS_TRANSITIONS.get(job.status, [])
@@ -90,24 +95,25 @@ def update_job(job_id: int, updated: Job, session: Session = Depends(get_session
                 detail=f"Invalid status transition from '{job.status}' to '{updated.status}'",
             )
 
-        # Save to history if valid
-        history = JobHistory(
+        session.add(JobHistory(
             job_id=job.id,
             previous_status=job.status,
             new_status=updated.status,
-        )
-        session.add(history)
+        ))
+
     if updated.status not in ["applied", "interviewing", "offer", "rejected"]:
         raise HTTPException(
             status_code=400,
             detail="Invalid status. Must be one of: applied, interviewing, offer, rejected",
         )
 
+    # Update fields (excluding user_id to prevent tampering)
     job.company = updated.company
     job.position = updated.position
     job.status = updated.status
     job.notes = updated.notes
-    session.add(job)
+    job.date_applied = updated.date_applied
+
     session.commit()
     session.refresh(job)
     return job
@@ -121,10 +127,14 @@ def get_job_history(job_id: int, session: Session = Depends(get_session)):
 
 # Delete Job #
 @app.delete("/jobs/{job_id}")
-def delete_job(job_id: int, session: Session = Depends(get_session)):
+def delete_job(
+    job_id: int,
+    session: Session = Depends(get_session),
+    current_user: User = Depends(get_current_user),
+):
     job = session.get(Job, job_id)
-    if not job:
-        raise HTTPException(status_code=404, detail="Job not found")
+    if not job or job.user_id != current_user.id:
+        raise HTTPException(status_code=404, detail="Job not found or unauthorized")
 
     session.delete(job)
     session.commit()

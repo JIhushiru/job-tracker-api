@@ -1,7 +1,7 @@
 VALID_STATUS_TRANSITIONS = {
-    "applied": ["interviewing", "rejected"],
-    "interviewing": ["offer", "rejected"],
-    "offer": ["accepted", "rejected"],
-    "accepted": [],
-    "rejected": [],
+    "applied": ["applied", "interviewing", "rejected"],
+    "interviewing": ["interviewing", "offer", "rejected"],
+    "offer": ["offer", "accepted", "rejected"],
+    "accepted": ["accepted"],
+    "rejected": ["rejected"],
 }

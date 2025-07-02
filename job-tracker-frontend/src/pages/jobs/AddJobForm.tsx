@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createJob } from "../../services/jobService";
 import type { Job } from "../../types";
+import { useNavigate } from "react-router-dom";
 
 const statusOptions = ["applied", "interviewing", "offer", "rejected"] as const;
 type JobStatus = typeof statusOptions[number];
@@ -16,6 +17,7 @@ export default function AddJobForm({ onJobAdded }: Props) {
   const [notes, setNotes] = useState("");
   const [dateApplied, setDateApplied] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +32,15 @@ export default function AddJobForm({ onJobAdded }: Props) {
       });
       onJobAdded(newJob);
     } catch (err: any) {
-      setError(err.response?.data?.detail || "Failed to add job");
+      const message = err.response?.data?.detail || "Failed to add job";
+      setError(message);
+    if (
+      err.response?.status === 401 || // Unauthorized
+      message.toLowerCase().includes("invalid token")
+    ) {
+      alert("Token expired or invalid. Please log in again.");
+      navigate("/");
+    }
     }
   };
 
