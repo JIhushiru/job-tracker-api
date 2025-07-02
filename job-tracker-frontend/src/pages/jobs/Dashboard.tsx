@@ -4,6 +4,7 @@ import type { Job } from "../../types";
 import JobTable from "./JobTable";
 import LogoutButton from "../../button/LogoutButton";
 import AddJobForm from "./AddJobForm"; 
+import SocialAccount from "../social/SocialAccount";
 
 export default function Dashboard() {
     const [jobs, setJobs] = useState<Job[]>([]);
@@ -32,6 +33,7 @@ export default function Dashboard() {
     };
 
     return (
+        <>
         <div>
             <h1>MY JOB APPLICATIONS</h1>
             {error ? (
@@ -66,5 +68,7 @@ export default function Dashboard() {
                 </>
             )}
         </div>
+        <SocialAccount />
+        </>
     );
 }

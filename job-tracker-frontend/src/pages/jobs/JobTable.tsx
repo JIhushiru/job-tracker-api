@@ -10,6 +10,8 @@ type JobTableProps = {
 const JobTable: React.FC<JobTableProps> = ({ jobs, onDelete }) => {
   const [sortBy, setSortBy] = useState<keyof Job | "notesLength">("date_applied")
   const [sortOrder, setSortOrder] = useState<"asc" |"desc">("asc");
+  const [currentPage, setCurrentPage] = useState(1);
+  const jobsPerPage = 10; 
 
 
   const handleDelete = async (jobId: number) => {
@@ -18,11 +20,20 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, onDelete }) => {
 
     try {
       await deleteJob(jobId);
-      onDelete(jobId); // remove from UI
+      onDelete(jobId); // remove from Dashboard's job list
+
+      const totalJobsAfterDelete = jobs.length - 1;
+      const newTotalPages = Math.ceil(totalJobsAfterDelete / jobsPerPage);
+
+      // If we just deleted the last item on the last page, move to previous page
+      if (currentPage > newTotalPages) {
+        setCurrentPage(Math.max(newTotalPages, 1));
+      }
     } catch (error) {
       alert("Failed to delete job");
     }
   };
+
 
   const handleSort = (column: keyof Job | "notesLength") => {
     if (sortBy === column) {
@@ -59,7 +70,12 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, onDelete }) => {
   const sortIndicator = (col: string) =>
     sortBy === col ? (sortOrder === "asc" ? "↑" : "↓") : "";
 
+  const indexOfLastJob = currentPage * jobsPerPage;
+  const indexOfFirstJob = indexOfLastJob - jobsPerPage;
+  const currentJobs = sortedJobs.slice(indexOfFirstJob, indexOfLastJob);
+
   return (
+    <>
     <div className ="jobTable">
       <table>
         <thead>
@@ -73,7 +89,7 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, onDelete }) => {
           </tr>
         </thead>
         <tbody>
-          {sortedJobs.map((job) => (
+          {currentJobs.map((job) => (
             <tr key={job.id}>
               <td className = "deleteColumn">
                   <button onClick={() => handleDelete(job.id)} className="deleteContainer">
@@ -90,6 +106,18 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, onDelete }) => {
         </tbody>
       </table>
     </div>
+  <div className="pagination-controls">
+    {Array.from({ length: Math.ceil(sortedJobs.length / jobsPerPage) }, (_, i) => i + 1).map((num) => (
+      <button
+        key={num}
+        onClick={() => setCurrentPage(num)}
+        className={num === currentPage ? "active-page" : ""}
+      >
+        {num}
+      </button>
+    ))}
+  </div>
+  </>
   );
 };
 

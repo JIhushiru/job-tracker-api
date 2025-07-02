@@ -85,7 +85,7 @@ td {
 }
 
 .jobTable {
-  margin-bottom: 2em;
+  margin-bottom: 1rem;
 }
 
 .deleteButton {
@@ -185,4 +185,24 @@ td.deleteColumn {
 
 .header {
   cursor: pointer;
+}
+
+.pagination-controls {
+  display: flex;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-top: 0rem;
+  margin-bottom: 1rem;
+}
+
+.pagination-controls button {
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #ccc;
+  background-color: rgb(43, 12, 12);
+  cursor: pointer;
+}
+
+.pagination-controls .active-page {
+  font-weight: bold;
+  background-color: #235705;
 }
