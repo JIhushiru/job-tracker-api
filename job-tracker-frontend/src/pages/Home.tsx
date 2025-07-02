@@ -1,5 +1,5 @@
-import { Link } from "react-router-dom";
 import "./Home.css";
+import Login from "./auth/Login";
 
 export default function Home() {
     return (
@@ -7,11 +7,7 @@ export default function Home() {
         <div className="home-container">
             <h1 className="home-title">Welcome to Job Tracker</h1>
             <p className="home-description">Track your job applications with ease</p>
-            <div className="home-links">
-                <Link to="/login" className="home-link">Login</Link>
-                <span> | </span>
-                <Link to="/signup" className="home-link">Sign Up</Link>
-            </div>
+            <Login/>
         </div>
         
         <div className="social-accounts">
