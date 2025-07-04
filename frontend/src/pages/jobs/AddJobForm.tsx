@@ -8,10 +8,9 @@ type JobStatus = typeof statusOptions[number];
 
 type Props = {
   onJobAdded: (job: Job) => void;
-  onCloser: () => void;
 };
 
-export default function AddJobForm({ onJobAdded, onCloser }: Props) {
+export default function AddJobForm({ onJobAdded } : Props) {
   const [company, setCompany] = useState("");
   const [position, setPosition] = useState("");
   const [status, setStatus] = useState<JobStatus>("applied");
@@ -31,7 +30,6 @@ export default function AddJobForm({ onJobAdded, onCloser }: Props) {
         date_applied: dateApplied || undefined,
       });
       onJobAdded(newJob);
-      onCloser();
     } catch (err: any) {
       const message = err.response?.data?.detail || "Failed to add job";
       setError(message);
