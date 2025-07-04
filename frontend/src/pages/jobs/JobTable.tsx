@@ -51,12 +51,12 @@ const JobTable: React.FC<JobTableProps> = ({ jobs, onDelete, onEdit }) => {
   };
 
   const sortedJobs = [...jobs].sort((a,b)=> {
-    let valA: string | number | undefined = a[sortBy as keyof Job];
-    let valB: string | number | undefined = b[sortBy as keyof Job];
+    let valA: string | number | undefined = a[sortBy as keyof Job] ?? undefined;
+    let valB: string | number | undefined = b[sortBy as keyof Job] ?? undefined;
 
     if (sortBy === "notesLength"){
-      valA = a.notes.length;
-      valB = b.notes.length;
+      valA = (a.notes ?? "").length;
+      valB = (b.notes ?? "").length;
     } else if (sortBy === "date_applied"){
       valA = a.date_applied ? new Date(a.date_applied).getTime() : 0;
       valB = b.date_applied ? new Date(b.date_applied).getTime() : 0;
