@@ -4,7 +4,7 @@ from sqlmodel import Session, select, delete
 from typing import Optional, List
 from fastapi import HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from app.schemas import Job
+from app.schemas import Job, JobCreate
 from app.database import get_session, init_db
 from app.worker import send_application_email
 from app.mongo_logger import log_job_to_mongo
@@ -157,7 +157,7 @@ def delete_job(
 # Add Job #
 @app.post("/jobs", response_model=Job)
 def add_job(
-    job: Job,
+    job: JobCreate,
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
 ):

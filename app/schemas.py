@@ -27,3 +27,10 @@ class JobHistory(SQLModel, table=True):
     previous_notes: Optional[str] = None
     new_notes: Optional[str] = None
     timestamp: datetime = Field(default_factory=datetime.utcnow)
+
+class JobCreate(SQLModel):
+    company: str
+    position: str
+    status: str
+    notes: Optional[str] = None
+    date_applied: Optional[str] = None 
