@@ -1,4 +1,4 @@
-import axios from "./api"; // make sure baseURL is correct
+import axios from "./api";
 import type { Job, JobCreate } from "../types";
 
 export const getJobs = async (): Promise<Job[]> => {
