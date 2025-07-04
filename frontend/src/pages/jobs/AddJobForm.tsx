@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { createJob } from "../../services/jobService";
-import type { Job } from "../../types";
+import type { Job} from "../../types";
 import { useNavigate } from "react-router-dom";
 
 const statusOptions = ["applied", "interviewing", "offer", "rejected"] as const;
@@ -8,9 +8,10 @@ type JobStatus = typeof statusOptions[number];
 
 type Props = {
   onJobAdded: (job: Job) => void;
+  onCloser: () => void;
 };
 
-export default function AddJobForm({ onJobAdded }: Props) {
+export default function AddJobForm({ onJobAdded, onCloser }: Props) {
   const [company, setCompany] = useState("");
   const [position, setPosition] = useState("");
   const [status, setStatus] = useState<JobStatus>("applied");
@@ -27,10 +28,10 @@ export default function AddJobForm({ onJobAdded }: Props) {
         position,
         status,
         notes,
-        user_id: 0,
         date_applied: dateApplied || undefined,
       });
       onJobAdded(newJob);
+      onCloser();
     } catch (err: any) {
       const message = err.response?.data?.detail || "Failed to add job";
       setError(message);

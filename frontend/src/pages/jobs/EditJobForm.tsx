@@ -1,4 +1,3 @@
-// src/components/jobs/EditJobForm.tsx
 import { useState } from "react";
 import { updateJob } from "../../services/jobService";
 import type { Job } from "../../types";
@@ -60,7 +59,7 @@ export default function EditJobForm({ job, onUpdated, onClose}: Props) {
           </option>
         ))}
       </select>
-      <textarea value={notes} onChange={(e) => setNotes(e.target.value)} />
+      <textarea value={notes ?? ""} onChange={(e) => setNotes(e.target.value)} />
       <input type="date" value={dateApplied} onChange={(e) => setDateApplied(e.target.value)} />
       <br />
       <button type="submit">Save</button>
