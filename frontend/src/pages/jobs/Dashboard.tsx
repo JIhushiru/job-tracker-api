@@ -6,6 +6,8 @@ import LogoutButton from "../../button/LogoutButton";
 import AddJobForm from "./AddJobForm"; 
 import SocialAccount from "../social/SocialAccount";
 import EditJobForm from "./EditJobForm";
+import SearchBar from "../../components/SearchBar";
+import { searchJobs } from "../../services/jobService";
 
 export default function Dashboard() {
     const [jobs, setJobs] = useState<Job[]>([]);
@@ -23,6 +25,20 @@ export default function Dashboard() {
         };
         fetchJobs();
     }, []);
+
+    const handleSearch = async (query: string) => {
+    try {
+        if (query.trim() === "") {
+            const data = await getJobs();
+            setJobs(data);
+        } else {
+            const data = await searchJobs(query);
+            setJobs(data);
+        }
+    } catch (err: any) {
+        setError("Search failed");
+    }
+};
 
     const handleDelete = (jobId: number) => {
         setJobs((prev) => prev.filter((job) => job.id !== jobId));
@@ -43,6 +59,7 @@ export default function Dashboard() {
         <>
         <div>
             <div className="job-application">MY JOB APPLICATIONS</div>
+            <SearchBar onSearch={handleSearch} />
             {error ? (
                 <button onClick={() => window.location.href = "/"}>Sign In</button>
             ) : (

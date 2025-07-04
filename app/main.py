@@ -26,7 +26,7 @@ import pandas as pd
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from app.auth import blacklist_token, SECRET_KEY, ALGORITHM
-
+from sqlalchemy import or_
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -54,10 +54,9 @@ GET /jobs?company={company}&status={status} -> filter by status and company
 def get_jobs(
     status: Optional[str] = Query(default=None),
     company: Optional[str] = Query(default=None),
-    sort_by: Optional[str] = Query(
-        default=None, pattern="^(company|status|date_applied)$"
-    ),
+    sort_by: Optional[str] = Query(default=None, pattern="^(company|status|date_applied)$"),
     order: Optional[str] = Query(default="asc", pattern="^(asc|desc)$"),
+    search: Optional[str] = Query(default=None),  # 🔍 Add this
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
@@ -67,6 +66,16 @@ def get_jobs(
         query = query.where(Job.status == status)
     if company:
         query = query.where(Job.company == company)
+
+    if search:
+        # ilike = case-insensitive partial match
+        query = query.where(
+            or_(
+                Job.company.ilike(f"%{search}%"),
+                Job.position.ilike(f"%{search}%")
+            )
+        )
+
     if sort_by:
         sort_column = getattr(Job, sort_by)
         if order == "desc":

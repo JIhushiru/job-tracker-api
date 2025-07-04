@@ -29,3 +29,11 @@ export const updateJob = async (id: number, updatedJob: Job): Promise<Job> => {
   });
   return response.data;
 };
+
+export const searchJobs = async (query: string): Promise<Job[]> => {
+  const response = await axios.get("/jobs", {
+    params: { search: query },
+    withCredentials: true,
+  });
+  return response.data;
+};
