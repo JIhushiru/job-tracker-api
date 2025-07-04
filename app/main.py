@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Depends
-from sqlmodel import Session, select
+from sqlmodel import Session, select, delete
 from typing import Optional, List
 from fastapi import HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -9,6 +9,7 @@ from app.database import get_session, init_db
 from app.worker import send_application_email
 from app.mongo_logger import log_job_to_mongo
 from fastapi.responses import JSONResponse
+from fastapi import Response, Request
 from app.auth import (
     get_password_hash,
     verify_password,
@@ -36,7 +37,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "https://jobtracker.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -48,7 +49,7 @@ GET /jobs?company={company} -> filter by company
 GET /jobs?company={company}&status={status} -> filter by status and company
 """
 
-
+# Get Jobs #
 @app.get("/jobs", response_model=List[Job])
 def get_jobs(
     status: Optional[str] = Query(default=None),
@@ -81,7 +82,7 @@ def update_job(
     job_id: int,
     updated: Job,
     session: Session = Depends(get_session),
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ):
     job = session.get(Job, job_id)
     if not job or job.user_id != current_user.id:
@@ -95,11 +96,13 @@ def update_job(
                 detail=f"Invalid status transition from '{job.status}' to '{updated.status}'",
             )
 
-        session.add(JobHistory(
-            job_id=job.id,
-            previous_status=job.status,
-            new_status=updated.status,
-        ))
+        session.add(
+            JobHistory(
+                job_id=job.id,
+                previous_status=job.status,
+                new_status=updated.status,
+            )
+        )
 
     if updated.status not in ["applied", "interviewing", "offer", "rejected"]:
         raise HTTPException(
@@ -118,7 +121,7 @@ def update_job(
     session.refresh(job)
     return job
 
-
+# Get Job History (to be implemented)#
 @app.get("/jobs/{job_id}/history", response_model=List[JobHistory])
 def get_job_history(job_id: int, session: Session = Depends(get_session)):
     history = session.exec(select(JobHistory).where(JobHistory.job_id == job_id)).all()
@@ -136,6 +139,7 @@ def delete_job(
     if not job or job.user_id != current_user.id:
         raise HTTPException(status_code=404, detail="Job not found or unauthorized")
 
+    session.exec(delete(JobHistory).where(JobHistory.job_id == job_id))
     session.delete(job)
     session.commit()
     return {"message": f"Job {job_id} deleted"}
@@ -148,7 +152,7 @@ def add_job(
     session: Session = Depends(get_session),
     user: User = Depends(get_current_user),
 ):
-    job.user_id = user.id
+    job = Job(**job.model_dump(), user_id=user.id)
     existing_job = session.exec(
         select(Job).where(
             Job.company == job.company,
@@ -165,8 +169,7 @@ def add_job(
     session.add(job)
     session.commit()
     session.refresh(job)
-    log_job_to_mongo(job.model_dump())
-    send_application_email.delay(job.company, job.position)
+
     return job
 
 
@@ -178,7 +181,7 @@ def generate_report(session: Session = Depends(get_session)):
     status_counts = df["status"].value_counts().to_dict()
     return JSONResponse(content=status_counts)
 
-
+# Signup #
 @app.post("/auth/signup")
 def signup(
     user: OAuth2PasswordRequestForm = Depends(), session: Session = Depends(get_session)
@@ -193,9 +196,10 @@ def signup(
     session.commit()
     return {"message": "User created"}
 
-
+# Login #
 @app.post("/auth/login")
 def login(
+    response: Response,
     form_data: OAuth2PasswordRequestForm = Depends(),
     session: Session = Depends(get_session),
 ):
@@ -204,14 +208,26 @@ def login(
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
     token = create_access_token(data={"sub": user.username})
-    return {"access_token": token, "token_type": "bearer"}
 
+    response.set_cookie(
+        key="access_token",
+        value=token,
+        httponly=True,
+        secure=True, 
+        samesite="None", 
+        path="/",
+        max_age=3600,  # 1 hour
+        expires=3600,  # 1 hour
+    )
 
+    return {"message": "Login successful"}
+
+# Profile (soon to be implemented) #
 @app.get("/profile")
 def read_profile(current_user: User = Depends(get_current_user)):
     return {"message": f"Hello, {current_user}"}
 
-
+# Export Jobs to CSV  (soon to be implemented) #
 @app.get("/export")
 def export_jobs(
     session: Session = Depends(get_session), user: User = Depends(get_current_user)
@@ -230,7 +246,7 @@ def export_jobs(
         headers={"Content-Disposition": "attachment; filename=jobs.csv"},
     )
 
-
+# Search Jobs (soon to be implemented) #
 @app.get("/jobs/search", response_model=List[Job])
 def search_jobs(
     query: str,
@@ -248,19 +264,33 @@ def search_jobs(
 
     return session.exec(stmt).all()
 
+# Logout and blacklist token #
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
-
 @app.post("/auth/logout")
-def logout(token: str = Depends(oauth2_scheme)):
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        exp = payload.get("exp")
-        if exp:
-            blacklist_token(token, exp)
-    except JWTError:
-        pass  # Ignore invalid or expired token
+def logout(
+    response: Response,
+    request: Request
+):
+    token = None
+    token = request.cookies.get("acess_token")
+
+    if not token:
+        auth_header = request.headers.get("Authorization")
+        if auth_header and auth_header.startswith("Bearer "):
+            token = auth_header.split(" ")[1]
+    if token:
+        try:
+            payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+            exp = payload.get("exp")
+            if exp:
+                blacklist_token(token,exp)
+        except JWTError:
+            pass # Invalid or expired token, just continue
+
+    # Clear the cookie
+    response.delete_cookie("access_token", path="/")
 
     return {"message": "Logged out and token blacklisted."}
 
