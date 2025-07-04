@@ -26,8 +26,6 @@ import pandas as pd
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from app.auth import blacklist_token, SECRET_KEY, ALGORITHM
-from fastapi.exception_handlers import http_exception_handler
-from fastapi.exceptions import HTTPException as FastAPIHTTPException
 
 
 @asynccontextmanager
@@ -39,7 +37,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "https://job-tracker-api-1.onrender.com/"],
+    allow_origins=["http://localhost:5173", "https://job-tracker-api-1.onrender.com"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -295,17 +293,6 @@ def logout(
     response.delete_cookie("access_token", path="/")
 
     return {"message": "Logged out and token blacklisted."}
-
-# Custom HTTPException handler to ensure CORS headers are present on error responses
-@app.exception_handler(FastAPIHTTPException)
-async def custom_http_exception_handler(request: Request, exc: FastAPIHTTPException):
-    response = await http_exception_handler(request, exc)
-    # Add CORS headers manually
-    response.headers["Access-Control-Allow-Origin"] = request.headers.get("origin", "*")
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    response.headers["Access-Control-Allow-Headers"] = "*"
-    response.headers["Access-Control-Allow-Methods"] = "*"
-    return response
 
 
 @app.get("/")
